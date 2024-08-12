@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { firestore } from '@/firebase';
 import { Box, Modal, Typography, Stack, TextField, Button } from '@mui/material';
 import { collection, deleteDoc, doc, getDocs, query, getDoc, setDoc } from 'firebase/firestore';
@@ -11,7 +11,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredInventory, setFilteredInventory] = useState([]);
 
-  const updateInventory = async () => {
+  const updateInventory = useCallback(async () => {
     const snapshot = query(collection(firestore, 'inventory'));
     const docs = await getDocs(snapshot);
     const inventoryList = [];
@@ -25,9 +25,14 @@ export default function Home() {
 
     setInventory(inventoryList);
     setFilteredInventory(inventoryList);
-  };
+  }, []);
 
   const addItem = async (item) => {
+    if (!item.trim()) {
+      alert('Item name cannot be empty');
+      return;
+    }
+
     const docRef = doc(collection(firestore, 'inventory'), item);
     const docSnap = await getDoc(docRef);
 
@@ -69,9 +74,14 @@ export default function Home() {
     }
   };
 
+  const handleReset = () => {
+    setSearchQuery('');
+    setFilteredInventory(inventory);
+  };
+
   useEffect(() => {
     updateInventory();
-  }, []);
+  }, [updateInventory]);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -135,13 +145,22 @@ export default function Home() {
           </Stack>
         </Box>
       </Modal>
-      <Button
-        variant="contained"
-        onClick={handleOpen}
-        sx={{ backgroundColor: '#FFC0CB', color: '#000' }}
-      >
-        Add Item
-      </Button>
+      <Box display="flex" gap={2}>
+        <Button
+          variant="contained"
+          onClick={handleOpen}
+          sx={{ backgroundColor: '#FFC0CB', color: '#000' }}
+        >
+          Add Item
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={handleReset}
+          sx={{ color: '#FFC0CB', borderColor: '#FFC0CB' }}
+        >
+          Reset
+        </Button>
+      </Box>
       <Box
         width="800px"
         display="flex"
